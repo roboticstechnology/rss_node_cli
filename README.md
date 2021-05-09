@@ -21,7 +21,7 @@ In the app folder write the command `node caesar-cipher [options]`, where the `o
 ### Usage examples:
 
 ```bash
-$ node index --action encode --shift 1 --input input.txt --output output.txt
+$ node index --action encode --shift 7 --input input.txt --output output.txt
 
-$ node index -a encode -s 1 
+$ node index -a encode -s 7 
 ```
