@@ -1,54 +1,10 @@
 const { program } = require('commander');
 const util = require('util');
 const { pipeline } = require("stream");
-const fs = require("fs");
+const { getTransformerStream, getOutputStream, getInputStream } = require("./tools/streamTransformAPI");
 
 const log = console.log;
 const pipelineAsync = util.promisify(pipeline);
-
-const apiInput = pathInputFile => {
-    if (fs.existsSync(pathInputFile)) return log('file is reading');
-    if (!pathInputFile) {
-        process.stdout.write("Type your input: ");
-        return process.stdin;
-    }
-    process.stderr.write("Input file does not found");
-    process.exit(1);
-}
-
-
-const apiOutput = pathOutputFile => {
-    if (fs.existsSync(pathOutputFile)) return log('file is writing');
-    if (!pathOutputFile) return process.stdout;
-    process.stderr.write("Output file does not found");
-    process.exit(1);
-};
-
-const getTransformerStream = (action, shift) => {
-    class Transformer extends Transform {
-
-        constructor() {
-            super();
-        }
-
-        _transform(chunk, enc, done) {
-            try {
-                if (action === "encode") this.push(encode(chunk.toString(), shift));
-                if (action === "decode") this.push(decode(chunk.toString(), shift));
-                if (action !== "encode" && action !== "decode") {
-                    console.error(`exeption  getTransformerStream(), creatStreem.js[str34], action = ${action}`);
-                    process.exit(1);
-                    done();
-                }
-            } catch (err) {
-                done(err);
-                console.log(err);
-            }
-
-        }
-    }
-    return new Transformer();
-};
 
 
 try {
@@ -64,17 +20,18 @@ try {
     log(`Exception : \n${err.message}`)
     process.exit(1)
 }
+const { shift, input, output, action } = program.opts();
 
-
-const inputStream = apiInput(program.input);
-const transformerStream = getTransformerStream(program.action, program.shift);
-const outputStream = apiOutput(program.output);
+const inputStream = getInputStream(input);
+const transformerStream = getTransformerStream(action, shift);
+const outputStream = getOutputStream(output);
 
 
 (async () => {
     try {
-        await pipelineAsync(readStream, transformerStream, writeStream);
+        await pipelineAsync(inputStream, transformerStream, outputStream);
     } catch (err) {
         log(`app run /n${err}`);
     }
 })();
+
